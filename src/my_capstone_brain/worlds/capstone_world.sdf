@@ -9,6 +9,10 @@
     <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
     
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    
     <light type="directional" name="sun">
       <cast_shadows>true</cast_shadows>
       <pose>0 0 10 0 0 0</pose>
@@ -47,7 +51,7 @@
       </plugin>
     </model>
 
-<model name="overhead_camera">
+    <model name="overhead_camera">
       <static>true</static>
       <pose>-0.06 0.23 1.1 0 1.5708 0</pose> 
       <link name="link">
@@ -64,6 +68,5 @@
         </sensor>
       </link>
     </model>
-
   </world>
 </sdf>

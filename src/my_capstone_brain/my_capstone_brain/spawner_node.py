@@ -33,9 +33,9 @@ class BoxSpawner(Node):
                     <pose>0 0 0 0 0 0</pose>
                     <link name="link">
                         <inertial><mass>0.05</mass></inertial>
-                        <collision name="col"><geometry><box><size>0.04 0.04 0.04</size></box></geometry></collision>
+                        <collision name="col"><geometry><box><size>0.02 0.02 0.02</size></box></geometry></collision>
                         <visual name="vis">
-                            <geometry><box><size>0.04 0.04 0.04</size></box></geometry>
+                            <geometry><box><size>0.02 0.02 0.02</size></box></geometry>
                             <material><ambient>{rgba}</ambient><diffuse>{rgba}</diffuse></material>
                         </visual>
                     </link>

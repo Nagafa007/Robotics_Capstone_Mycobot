@@ -26,11 +26,15 @@ gnome-terminal --tab --title="URDF Publisher" -- bash -c "source install/setup.b
 
 sleep 2 
 
+# ARM POSITION PARAMETERS (Override with: ARM_X=0.1 ARM_Y=-0.4 ./launch_capstone.sh)
+ARM_X="${ARM_X:- -0.1}"
+ARM_Y="${ARM_Y:- -0.07}"  # Shifted 0.3m away in -y from original -0.05
+
 # Terminal 3: Gazebo Spawner & Motor Controllers
-gnome-terminal --tab --title="Gazebo Spawner" -- bash -c "source install/setup.bash; export GZ_SIM_RESOURCE_PATH=/home/mos/final_pro/the_last_dance/src; ros2 run ros_gz_sim create -topic robot_description -name mycobot -x -0.06 -y -0.05 -z 0.0; sleep 5; ros2 run controller_manager spawner joint_state_broadcaster --controller-manager-timeout 60; ros2 run controller_manager spawner arm_controller --controller-manager-timeout 60; ros2 run controller_manager spawner mycobot_gripper_controller --controller-manager-timeout 60; exec bash"
+gnome-terminal --tab --title="Gazebo Spawner" -- bash -c "source install/setup.bash; export GZ_SIM_RESOURCE_PATH=/home/mos/final_pro/the_last_dance/src; ros2 run ros_gz_sim create -topic robot_description -name mycobot -x $ARM_X -y $ARM_Y -z 0.0; sleep 5; ros2 run controller_manager spawner joint_state_broadcaster --controller-manager-timeout 60; ros2 run controller_manager spawner arm_controller --controller-manager-timeout 60; ros2 run controller_manager spawner mycobot_gripper_controller --controller-manager-timeout 60; exec bash"
 
 # Terminal 4: Vision Bridge (CAMERA FIXED HERE!)
-gnome-terminal --tab --title="Vision Bridge" -- bash -c "source install/setup.bash; ros2 run ros_gz_bridge parameter_bridge /overhead_camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image] & ros2 run rqt_image_view rqt_image_view; exec bash"
+# gnome-terminal --tab --title="Vision Bridge" -- bash -c "source install/setup.bash; ros2 run ros_gz_bridge parameter_bridge /overhead_camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image] & ros2 run rqt_image_view rqt_image_view; exec bash"
 
 # Terminal 5: Box Spawner
 gnome-terminal --tab --title="Box Spawner" -- bash -c "source install/setup.bash; ros2 run my_capstone_brain spawner_node; exec bash"
