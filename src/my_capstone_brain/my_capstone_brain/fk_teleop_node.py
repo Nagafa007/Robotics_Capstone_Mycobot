@@ -16,9 +16,8 @@ class FKTeleopNode(Node):
             'link4_to_link5', 'link5_to_link6', 'link6_to_link6_flange'
         ]
         
-        # Start with arm pointing straight up (0 on all joints)
         self.current_joints = np.zeros(6)
-        self.gripper_closed = False
+        self.current_gripper_pos = 0.0 # Start fully open
         
         self.settings = termios.tcgetattr(sys.stdin)
         self.get_logger().info("\n==================================")
@@ -29,7 +28,7 @@ class FKTeleopNode(Node):
         self.get_logger().info("R / F : Joint 4 (Wrist Pitch)")
         self.get_logger().info("T / G : Joint 5 (Wrist Yaw)")
         self.get_logger().info("Y / H : Joint 6 (Wrist Roll)")
-        self.get_logger().info("SPACE : Toggle Gripper")
+        self.get_logger().info("U / J : Gripper (Open / Close)")
         self.get_logger().info("==================================\n")
 
         self.input_thread = threading.Thread(target=self.keyboard_loop, daemon=True)
@@ -44,18 +43,15 @@ class FKTeleopNode(Node):
         msg.points.append(point)
         self.arm_pub.publish(msg)
 
-    def toggle_gripper(self):
-        self.gripper_closed = not self.gripper_closed
-        target_pos = -0.7 if self.gripper_closed else 0.0
-        
+    def publish_gripper(self):
         msg = JointTrajectory()
         msg.joint_names = ['gripper_controller']
         point = JointTrajectoryPoint()
-        point.positions = [target_pos]
-        point.time_from_start = Duration(sec=1, nanosec=0)
+        point.positions = [self.current_gripper_pos]
+        # Faster reaction time for the gripper so you can tap the keys
+        point.time_from_start = Duration(sec=0, nanosec=100000000) 
         msg.points.append(point)
         self.gripper_pub.publish(msg)
-        print(f"--- Gripper {'CLOSED' if self.gripper_closed else 'OPEN'} ---")
 
     def get_key(self):
         tty.setraw(sys.stdin.fileno())
@@ -68,10 +64,11 @@ class FKTeleopNode(Node):
         return None
 
     def keyboard_loop(self):
-        step = 0.05 # Move 0.05 radians per key press
+        step = 0.05 
         while rclpy.ok():
             key = self.get_key()
             if key:
+                # Arm Joints
                 if key == 'q': self.current_joints[0] += step
                 elif key == 'a': self.current_joints[0] -= step
                 elif key == 'w': self.current_joints[1] += step
@@ -84,12 +81,24 @@ class FKTeleopNode(Node):
                 elif key == 'g': self.current_joints[4] -= step
                 elif key == 'y': self.current_joints[5] += step
                 elif key == 'h': self.current_joints[5] -= step
-                elif key == ' ': self.toggle_gripper()
                 
-                # Clip to hardware limits [-2.8, 2.8]
+                # Gripper Controls
+                elif key == 'u': 
+                    self.current_gripper_pos += step
+                    # URDF max open limit
+                    self.current_gripper_pos = np.clip(self.current_gripper_pos, -0.7, 0.15)
+                    self.publish_gripper()
+                    print(f"Gripper Pos: {self.current_gripper_pos:.2f} (Opening)")
+                elif key == 'j': 
+                    self.current_gripper_pos -= step
+                    # URDF max close limit
+                    self.current_gripper_pos = np.clip(self.current_gripper_pos, -0.7, 0.15)
+                    self.publish_gripper()
+                    print(f"Gripper Pos: {self.current_gripper_pos:.2f} (Closing)")
+                
                 self.current_joints = np.clip(self.current_joints, -2.8, 2.8)
                 
-                if key != ' ':
+                if key not in ['u', 'j']:
                     print(f"Joints: {[round(j, 2) for j in self.current_joints]}")
                     self.publish_joints()
 
@@ -97,6 +106,7 @@ def main():
     rclpy.init()
     node = FKTeleopNode()
     node.publish_joints() 
+    node.publish_gripper()
     
     try:
         rclpy.spin(node)

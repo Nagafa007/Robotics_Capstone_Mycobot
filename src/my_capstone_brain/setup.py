@@ -29,6 +29,7 @@ setup(
             'conveyor_node = my_capstone_brain.conveyor_node:main',
             'ik_teleop_node = my_capstone_brain.ik_teleop_node:main',
             'fk_teleop_node = my_capstone_brain.fk_teleop_node:main', # <-- NEW LINE
+            'vision_node = my_capstone_brain.vision_node:main',
         ],
     },
 )
